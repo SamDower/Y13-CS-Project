@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
-    [SerializeField] int chunkSize;
+    [SerializeField] Vector3 chunkSize;
     [SerializeField] Vector3 noiseOffset;
     [SerializeField] float noiseScale;
+    [SerializeField] float meshScale;
     [SerializeField] [Range(0f, 1f)] float surfaceHeight;
+    [SerializeField] bool interpolate;
 
     [Header("Gizmos")]
     [SerializeField] bool showCube = true;
@@ -286,11 +288,11 @@ public class MeshGenerator : MonoBehaviour
 
 
         // For each cube
-        for (int x = 0; x < chunkSize; x++)
+        for (int x = 0; x < chunkSize.x; x++)
         {
-            for (int y = 0; y < chunkSize; y++)
+            for (int y = 0; y < chunkSize.y; y++)
             {
-                for (int z = 0; z < chunkSize; z++)
+                for (int z = 0; z < chunkSize.z; z++)
                 {
                     // Determin cube type from binary
                     int cubeNumber = 0;
@@ -323,7 +325,18 @@ public class MeshGenerator : MonoBehaviour
                             if (edgeVal == 9) localPoints = new Vector3[2] { new Vector3(0, 0, 1), new Vector3(0, 1, 1) };
                             if (edgeVal == 10) localPoints = new Vector3[2] { new Vector3(1, 0, 1), new Vector3(1, 1, 1) };
                             if (edgeVal == 11) localPoints = new Vector3[2] { new Vector3(1, 0, 0), new Vector3(1, 1, 0) };
-                            verticesList.Add(Vector3.Lerp(localPoints[0], localPoints[1], 0.5f) + new Vector3(x, y, z));
+                            if (!interpolate)
+                            {
+                                Vector3 localPoint = Vector3.Lerp(localPoints[0], localPoints[1], 0.5f) + new Vector3(x, y, z) - chunkSize / 2f;
+                                verticesList.Add(localPoint * meshScale);
+                            } else
+                            {
+                                float noise1 = Noise.Perlin3D(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z, noiseOffset, noiseScale);
+                                float noise2 = Noise.Perlin3D(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z, noiseOffset, noiseScale);
+                                float t = (surfaceHeight - noise1) / (noise2 - noise1);
+                                Vector3 localPoint = Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z) - chunkSize / 2f;
+                                verticesList.Add(localPoint * meshScale);
+                            }
 
                             // Add Triangle Point
                             trianglesList.Add(verticesList.Count - 1);
@@ -346,17 +359,17 @@ public class MeshGenerator : MonoBehaviour
     {
         if (showCorners)
         {
-            for (int x = 0; x < chunkSize; x++)
+            for (int x = 0; x < chunkSize.x; x++)
             {
-                for (int y = 0; y < chunkSize; y++)
+                for (int y = 0; y < chunkSize.y; y++)
                 {
-                    for (int z = 0; z < chunkSize; z++)
+                    for (int z = 0; z < chunkSize.z; z++)
                     {
                         float noise = Noise.Perlin3D(x, y, z, noiseOffset, noiseScale);
                         if (surfaceHeight < noise)
                         {
                             Gizmos.color = Color.Lerp(Color.black, Color.white, noise);
-                            Gizmos.DrawSphere(new Vector3(x, y, z), 0.15f);
+                            Gizmos.DrawSphere((transform.position + new Vector3(x, y, z) - chunkSize/2f) * meshScale, 0.15f * meshScale);
                         }
                     }
                 }
@@ -366,7 +379,7 @@ public class MeshGenerator : MonoBehaviour
         if (showCube)
         {
             Gizmos.color = Color.gray;
-            Gizmos.DrawWireCube(new Vector3(chunkSize, chunkSize, chunkSize) / 2f, new Vector3(chunkSize, chunkSize, chunkSize));
+            Gizmos.DrawWireCube(transform.position, chunkSize * meshScale);
         }
     }
 }
