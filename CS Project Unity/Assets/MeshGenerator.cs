@@ -8,8 +8,10 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField] Vector3 noiseOffset;
     [SerializeField] float noiseScale;
     [SerializeField] float meshScale;
-    [SerializeField] [Range(0f, 1f)] float surfaceHeight;
+    [SerializeField] float surfaceHeight;
     [SerializeField] bool interpolate;
+    [SerializeField] bool weightY;
+    [SerializeField] float noiseWeight;
 
     [Header("Gizmos")]
     [SerializeField] bool showCube = true;
@@ -296,14 +298,14 @@ public class MeshGenerator : MonoBehaviour
                 {
                     // Determin cube type from binary
                     int cubeNumber = 0;
-                    if (Noise.Perlin3D(x + 0, y + 0, z + 0, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 1;
-                    if (Noise.Perlin3D(x + 0, y + 0, z + 1, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 2;
-                    if (Noise.Perlin3D(x + 1, y + 0, z + 1, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 4;
-                    if (Noise.Perlin3D(x + 1, y + 0, z + 0, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 8;
-                    if (Noise.Perlin3D(x + 0, y + 1, z + 0, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 16;
-                    if (Noise.Perlin3D(x + 0, y + 1, z + 1, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 32;
-                    if (Noise.Perlin3D(x + 1, y + 1, z + 1, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 64;
-                    if (Noise.Perlin3D(x + 1, y + 1, z + 0, noiseOffset, noiseScale) < surfaceHeight) cubeNumber += 128;
+                    if (DeterminNoise(x + 0, y + 0, z + 0) < surfaceHeight) cubeNumber += 1;
+                    if (DeterminNoise(x + 0, y + 0, z + 1) < surfaceHeight) cubeNumber += 2;
+                    if (DeterminNoise(x + 1, y + 0, z + 1) < surfaceHeight) cubeNumber += 4;
+                    if (DeterminNoise(x + 1, y + 0, z + 0) < surfaceHeight) cubeNumber += 8;
+                    if (DeterminNoise(x + 0, y + 1, z + 0) < surfaceHeight) cubeNumber += 16;
+                    if (DeterminNoise(x + 0, y + 1, z + 1) < surfaceHeight) cubeNumber += 32;
+                    if (DeterminNoise(x + 1, y + 1, z + 1) < surfaceHeight) cubeNumber += 64;
+                    if (DeterminNoise(x + 1, y + 1, z + 0) < surfaceHeight) cubeNumber += 128;
 
                     // Loop through each triangle in the tiangulation table
                     for (int i = 0; triTable[cubeNumber,i] != -1; i += 3)
@@ -331,8 +333,8 @@ public class MeshGenerator : MonoBehaviour
                                 verticesList.Add(localPoint * meshScale);
                             } else
                             {
-                                float noise1 = Noise.Perlin3D(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z, noiseOffset, noiseScale);
-                                float noise2 = Noise.Perlin3D(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z, noiseOffset, noiseScale);
+                                float noise1 = DeterminNoise(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z);
+                                float noise2 = DeterminNoise(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z);
                                 float t = (surfaceHeight - noise1) / (noise2 - noise1);
                                 Vector3 localPoint = Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z) - chunkSize / 2f;
                                 verticesList.Add(localPoint * meshScale);
@@ -355,6 +357,16 @@ public class MeshGenerator : MonoBehaviour
         
     }
 
+    float DeterminNoise(float x, float y, float z)
+    {
+        float n = Noise.Perlin3D(new Vector3(x,y,z) + transform.position / meshScale, noiseOffset, noiseScale);
+        if (weightY)
+        {
+            n = -(y + transform.position.y / meshScale - chunkSize.y / 2f) + n * noiseWeight;
+        }
+        return (n);
+    }
+
     private void OnDrawGizmos()
     {
         if (showCorners)
@@ -365,7 +377,7 @@ public class MeshGenerator : MonoBehaviour
                 {
                     for (int z = 0; z < chunkSize.z; z++)
                     {
-                        float noise = Noise.Perlin3D(x, y, z, noiseOffset, noiseScale);
+                        float noise = DeterminNoise(x, y, z);
                         if (surfaceHeight < noise)
                         {
                             Gizmos.color = Color.Lerp(Color.black, Color.white, noise);
