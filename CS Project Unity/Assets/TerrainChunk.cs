@@ -2,19 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MeshGenerator : MonoBehaviour
-{
-    [SerializeField] float chunkSize;
-    [SerializeField] float chunkDensity;
-    //[SerializeField] float meshScale;
-    [SerializeField] float surfaceHeight;
-    [SerializeField] bool interpolate;
+// Responsible for managing and generating this specific chunk
 
-    [Header("Noise Settings")]
-    [SerializeField] Vector3 noiseOffset;
-    [SerializeField] float noiseScale;
-    [SerializeField] bool weightY;
-    [SerializeField] float noiseWeight;
+public class TerrainChunk : MonoBehaviour
+{
+    float chunkSize;
+    float chunkDensity;
+    float surfaceHeight;
+    bool interpolate;
+
+    ShapeGenerator shapeGenerator;
 
     [Header("Gizmos")]
     [SerializeField] bool showCube = true;
@@ -276,15 +273,16 @@ public class MeshGenerator : MonoBehaviour
 {0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
+    
 
-    // Updates the mesh whenever a value is changed in the inspector
-    private void OnValidate()
+    public void GenerateMesh(ShapeGenerator shapeGenerator, float chunkSize, float chunkDensity, float surfaceHeight, bool interpolate)
     {
-        GenerateMesh();
-    }
+        this.shapeGenerator = shapeGenerator;
+        this.chunkSize = chunkSize;
+        this.chunkDensity = chunkDensity;
+        this.surfaceHeight = surfaceHeight;
+        this.interpolate = interpolate;
 
-    public void GenerateMesh()
-    {
         // Setup triangles and vertices lists with undefined sizes
         List<Vector3> verticesList = new List<Vector3>();
         List<int> trianglesList = new List<int>();
@@ -301,14 +299,14 @@ public class MeshGenerator : MonoBehaviour
                 {
                     // Determin cube type from binary
                     int cubeNumber = 0;
-                    if (DeterminNoise(x + 0, y + 0, z + 0) < surfaceHeight) cubeNumber += 1;
-                    if (DeterminNoise(x + 0, y + 0, z + 1) < surfaceHeight) cubeNumber += 2;
-                    if (DeterminNoise(x + 1, y + 0, z + 1) < surfaceHeight) cubeNumber += 4;
-                    if (DeterminNoise(x + 1, y + 0, z + 0) < surfaceHeight) cubeNumber += 8;
-                    if (DeterminNoise(x + 0, y + 1, z + 0) < surfaceHeight) cubeNumber += 16;
-                    if (DeterminNoise(x + 0, y + 1, z + 1) < surfaceHeight) cubeNumber += 32;
-                    if (DeterminNoise(x + 1, y + 1, z + 1) < surfaceHeight) cubeNumber += 64;
-                    if (DeterminNoise(x + 1, y + 1, z + 0) < surfaceHeight) cubeNumber += 128;
+                    if (NoiseAtIndex(x + 0, y + 0, z + 0) < surfaceHeight) cubeNumber += 1;
+                    if (NoiseAtIndex(x + 0, y + 0, z + 1) < surfaceHeight) cubeNumber += 2;
+                    if (NoiseAtIndex(x + 1, y + 0, z + 1) < surfaceHeight) cubeNumber += 4;
+                    if (NoiseAtIndex(x + 1, y + 0, z + 0) < surfaceHeight) cubeNumber += 8;
+                    if (NoiseAtIndex(x + 0, y + 1, z + 0) < surfaceHeight) cubeNumber += 16;
+                    if (NoiseAtIndex(x + 0, y + 1, z + 1) < surfaceHeight) cubeNumber += 32;
+                    if (NoiseAtIndex(x + 1, y + 1, z + 1) < surfaceHeight) cubeNumber += 64;
+                    if (NoiseAtIndex(x + 1, y + 1, z + 0) < surfaceHeight) cubeNumber += 128;
 
                     // Loop through each triangle in the tiangulation table
                     for (int i = 0; triTable[cubeNumber,i] != -1; i += 3)
@@ -336,8 +334,8 @@ public class MeshGenerator : MonoBehaviour
                                 verticesList.Add(localPoint);
                             } else
                             {
-                                float noise1 = DeterminNoise(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z);
-                                float noise2 = DeterminNoise(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z);
+                                float noise1 = NoiseAtIndex(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z);
+                                float noise2 = NoiseAtIndex(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z);
                                 float t = (surfaceHeight - noise1) / (noise2 - noise1);
                                 Vector3 localPoint = (Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z)) * chunkSize / chunkDensity - Vector3.one * chunkSize / 2f;
                                 verticesList.Add(localPoint);
@@ -360,16 +358,12 @@ public class MeshGenerator : MonoBehaviour
         
     }
 
-    float DeterminNoise(float x, float y, float z)
+    float NoiseAtIndex(float x, float y, float z)
     {
-        float n = Noise.Perlin3D(transform.position - Vector3.one*chunkSize/2f + new Vector3(x, y, z) * chunkSize / chunkDensity, noiseOffset, noiseScale);
-        if (weightY)
-        {
-            n = -(transform.position.y - chunkSize / 2f + y * chunkSize / chunkDensity) + n * noiseWeight;
-        }
-        return (n);
+        Vector3 worldPoint = transform.position - Vector3.one * chunkSize / 2f + new Vector3(x, y, z) * chunkSize / chunkDensity;
+        return (shapeGenerator.EvaluateNoise(worldPoint));
     }
-
+    
     private void OnDrawGizmos()
     {
         if (showCorners)
@@ -380,7 +374,7 @@ public class MeshGenerator : MonoBehaviour
                 {
                     for (int z = 0; z < chunkDensity; z++)
                     {
-                        float noise = DeterminNoise(x, y, z);
+                        float noise = NoiseAtIndex(x, y, z);
                         if (surfaceHeight < noise)
                         {
                             Gizmos.color = Color.Lerp(Color.black, Color.white, noise);
