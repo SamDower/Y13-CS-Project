@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
-    [SerializeField] Vector3 chunkSize;
-    [SerializeField] Vector3 noiseOffset;
-    [SerializeField] float noiseScale;
-    [SerializeField] float meshScale;
+    [SerializeField] float chunkSize;
+    [SerializeField] float chunkDensity;
+    //[SerializeField] float meshScale;
     [SerializeField] float surfaceHeight;
     [SerializeField] bool interpolate;
+
+    [Header("Noise Settings")]
+    [SerializeField] Vector3 noiseOffset;
+    [SerializeField] float noiseScale;
     [SerializeField] bool weightY;
     [SerializeField] float noiseWeight;
 
@@ -290,11 +293,11 @@ public class MeshGenerator : MonoBehaviour
 
 
         // For each cube
-        for (int x = 0; x < chunkSize.x; x++)
+        for (int x = 0; x < chunkDensity; x++)
         {
-            for (int y = 0; y < chunkSize.y; y++)
+            for (int y = 0; y < chunkDensity; y++)
             {
-                for (int z = 0; z < chunkSize.z; z++)
+                for (int z = 0; z < chunkDensity; z++)
                 {
                     // Determin cube type from binary
                     int cubeNumber = 0;
@@ -329,15 +332,15 @@ public class MeshGenerator : MonoBehaviour
                             if (edgeVal == 11) localPoints = new Vector3[2] { new Vector3(1, 0, 0), new Vector3(1, 1, 0) };
                             if (!interpolate)
                             {
-                                Vector3 localPoint = Vector3.Lerp(localPoints[0], localPoints[1], 0.5f) + new Vector3(x, y, z) - chunkSize / 2f;
-                                verticesList.Add(localPoint * meshScale);
+                                Vector3 localPoint = (Vector3.Lerp(localPoints[0], localPoints[1], 0.5f) + new Vector3(x, y, z)) * chunkSize / chunkDensity - Vector3.one * chunkSize / 2f;
+                                verticesList.Add(localPoint);
                             } else
                             {
                                 float noise1 = DeterminNoise(x + localPoints[0].x, y + localPoints[0].y, z + localPoints[0].z);
                                 float noise2 = DeterminNoise(x + localPoints[1].x, y + localPoints[1].y, z + localPoints[1].z);
                                 float t = (surfaceHeight - noise1) / (noise2 - noise1);
-                                Vector3 localPoint = Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z) - chunkSize / 2f;
-                                verticesList.Add(localPoint * meshScale);
+                                Vector3 localPoint = (Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z)) * chunkSize / chunkDensity - Vector3.one * chunkSize / 2f;
+                                verticesList.Add(localPoint);
                             }
 
                             // Add Triangle Point
@@ -359,10 +362,10 @@ public class MeshGenerator : MonoBehaviour
 
     float DeterminNoise(float x, float y, float z)
     {
-        float n = Noise.Perlin3D(new Vector3(x,y,z) + transform.position / meshScale, noiseOffset, noiseScale);
+        float n = Noise.Perlin3D(transform.position - Vector3.one*chunkSize/2f + new Vector3(x, y, z) * chunkSize / chunkDensity, noiseOffset, noiseScale);
         if (weightY)
         {
-            n = -(y + transform.position.y / meshScale - chunkSize.y / 2f) + n * noiseWeight;
+            n = -(transform.position.y - chunkSize / 2f + y * chunkSize / chunkDensity) + n * noiseWeight;
         }
         return (n);
     }
@@ -371,17 +374,17 @@ public class MeshGenerator : MonoBehaviour
     {
         if (showCorners)
         {
-            for (int x = 0; x < chunkSize.x; x++)
+            for (int x = 0; x < chunkDensity; x++)
             {
-                for (int y = 0; y < chunkSize.y; y++)
+                for (int y = 0; y < chunkDensity; y++)
                 {
-                    for (int z = 0; z < chunkSize.z; z++)
+                    for (int z = 0; z < chunkDensity; z++)
                     {
                         float noise = DeterminNoise(x, y, z);
                         if (surfaceHeight < noise)
                         {
                             Gizmos.color = Color.Lerp(Color.black, Color.white, noise);
-                            Gizmos.DrawSphere((transform.position + new Vector3(x, y, z) - chunkSize/2f) * meshScale, 0.15f * meshScale);
+                            Gizmos.DrawSphere(transform.position - Vector3.one*chunkSize/2f + new Vector3(x, y, z)*chunkSize/chunkDensity, 0.15f);
                         }
                     }
                 }
@@ -391,7 +394,7 @@ public class MeshGenerator : MonoBehaviour
         if (showCube)
         {
             Gizmos.color = Color.gray;
-            Gizmos.DrawWireCube(transform.position, chunkSize * meshScale);
+            Gizmos.DrawWireCube(transform.position, Vector3.one*chunkSize);
         }
     }
 }
