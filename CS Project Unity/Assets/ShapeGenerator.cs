@@ -4,30 +4,19 @@ using UnityEngine;
 
 public class ShapeGenerator
 {
-    //float chunkSize;
-    //float chunkDensity;
-    //float surfaceHeight;
-    //bool interpolate;
+    ShapeSettings settings;
 
-    Vector3 noiseOffset;
-    float noiseScale;
-    bool weightY;
-    float noiseWeight;
-
-    public ShapeGenerator(Vector3 noiseOffset, float noiseScale, bool weightY, float noiseWeight)
+    public ShapeGenerator(ShapeSettings settings)
     {
-        this.noiseOffset = noiseOffset;
-        this.noiseScale = noiseScale;
-        this.weightY = weightY;
-        this.noiseWeight = noiseWeight;
+        this.settings = settings;
     }
 
     public float EvaluateNoise(Vector3 worldPoint)
     {
-        float n = Noise.Perlin3D(worldPoint, noiseOffset, noiseScale);
-        if (weightY)
+        float n = Noise.Perlin3D(worldPoint, settings.noiseOffset, settings.noiseScale) * settings.noiseWeight;
+        if (settings.weightY)
         {
-            n = -worldPoint.y + n* noiseWeight;
+            n = -worldPoint.y + n;
         }
         return (n);
     }
