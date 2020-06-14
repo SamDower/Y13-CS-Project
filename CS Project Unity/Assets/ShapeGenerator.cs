@@ -13,10 +13,14 @@ public class ShapeGenerator
 
     public float EvaluateNoise(Vector3 worldPoint)
     {
-        float n = Noise.Perlin3D(worldPoint, settings.noiseOffset, settings.noiseScale) * settings.noiseWeight;
+        if (settings.lockSeaLevel)
+            if (worldPoint.y <= settings.seaLevel)
+                return (10000f);
+
+        float n = Noise.Perlin3D(worldPoint, settings.noiseOffset, settings.noiseScale, settings.octaves, settings.persistance, settings.lacunarity) * settings.noiseWeight;
         if (settings.weightY)
         {
-            n = -worldPoint.y + n;
+            n = -worldPoint.y + settings.yOffset + n;
         }
         return (n);
     }

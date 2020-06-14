@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: Shape1
   m_EditorClassIdentifier: 
   noiseOffset: {x: 320, y: 300, z: -100}
-  noiseScale: 20
+  noiseScale: 60
   weightY: 1
-  noiseWeight: 50
+  yOffset: -30
+  lockSeaLevel: 1
+  seaLevel: -5
+  noiseWeight: 80
+  octaves: 3
+  persistance: 0.5
+  lacunarity: 3

@@ -4,17 +4,30 @@ using UnityEngine;
 
 public static class Noise 
 {
-    public static float Perlin3D(Vector3 point, Vector3 offset, float scale)
+    public static float Perlin3D(Vector3 point, Vector3 offset, float scale, int octaves, float persistance, float lacunarity)
     {
-        float ab = Mathf.PerlinNoise((point.x + offset.x) / scale, (point.y + offset.y) / scale);
-        float bc = Mathf.PerlinNoise((point.y + offset.y) / scale, (point.z + offset.z) / scale);
-        float ac = Mathf.PerlinNoise((point.x + offset.x) / scale, (point.z + offset.z) / scale);
+        float amplitude = 1f;
+        float frequency = 1f;
+        float noiseVal = 0;
 
-        float ba = Mathf.PerlinNoise((point.y + offset.y) / scale, (point.x + offset.x) / scale);
-        float cb = Mathf.PerlinNoise((point.z + offset.z) / scale, (point.y + offset.y) / scale);
-        float ca = Mathf.PerlinNoise((point.z + offset.z) / scale, (point.x + offset.x) / scale);
+        for (int i = 0; i < octaves; i++)
+        {
 
-        float abc = ab + bc + ac + ba + cb + ca;
-        return abc / 6f;
+            float ab = Mathf.PerlinNoise((point.x + offset.x) / scale * frequency, (point.y + offset.y) / scale * frequency);
+            float bc = Mathf.PerlinNoise((point.y + offset.y) / scale * frequency, (point.z + offset.z) / scale * frequency);
+            float ac = Mathf.PerlinNoise((point.x + offset.x) / scale * frequency, (point.z + offset.z) / scale * frequency);
+
+            float ba = Mathf.PerlinNoise((point.y + offset.y) / scale * frequency, (point.x + offset.x) / scale * frequency);
+            float cb = Mathf.PerlinNoise((point.z + offset.z) / scale * frequency, (point.y + offset.y) / scale * frequency);
+            float ca = Mathf.PerlinNoise((point.z + offset.z) / scale * frequency, (point.x + offset.x) / scale * frequency);
+
+            float perlinValue = (ab + bc + ac + ba + cb + ca) / 6f;
+            noiseVal += perlinValue * amplitude;
+
+            amplitude *= persistance;
+            frequency *= lacunarity;
+        }
+
+        return (noiseVal);
     }
 }
