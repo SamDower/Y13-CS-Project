@@ -7,7 +7,7 @@ public class World : MonoBehaviour
     public bool autoUpdate = true;
 
     [Header("Chunk Settings")]
-    [SerializeField] float chunkSize;
+    public float chunkSize;
     [SerializeField] float chunkDensity;
     [SerializeField] float surfaceHeight;
     [SerializeField] bool interpolate;
@@ -50,6 +50,13 @@ public class World : MonoBehaviour
         {
             chunk.GetComponent<MeshRenderer>().sharedMaterial.color = colorSettings.color;
         }
+    }
+
+    public void UpdateTerrainChunk(TerrainChunk chunk)
+    {
+        shapeGenerator = new ShapeGenerator(shapeSettings);
+        chunk.GenerateMesh(shapeGenerator, chunkSize, chunkDensity, surfaceHeight, interpolate);
+        chunk.GetComponent<MeshRenderer>().sharedMaterial.color = colorSettings.color;
     }
 
     public void OnShapeSettingsUpdated()

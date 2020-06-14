@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aefb66a3432a044498523517a41e83d4, type: 3}
   m_Name: Shape1
   m_EditorClassIdentifier: 
-  noiseOffset: {x: 320, y: 40, z: -100}
-  noiseScale: 21.9
+  noiseOffset: {x: 320, y: 300, z: -100}
+  noiseScale: 20
   weightY: 1
   noiseWeight: 50
