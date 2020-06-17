@@ -48,7 +48,7 @@ public class World : MonoBehaviour
         TerrainChunk[] chunks = FindObjectsOfType<TerrainChunk>();
         foreach (TerrainChunk chunk in chunks)
         {
-            chunk.GetComponent<MeshRenderer>().sharedMaterial.color = colorSettings.color;
+            chunk.GenerateColors(colorSettings);
         }
     }
 
@@ -56,7 +56,7 @@ public class World : MonoBehaviour
     {
         shapeGenerator = new ShapeGenerator(shapeSettings);
         chunk.GenerateMesh(shapeGenerator, chunkSize, chunkDensity, surfaceHeight, interpolate);
-        chunk.GetComponent<MeshRenderer>().sharedMaterial.color = colorSettings.color;
+        chunk.GenerateColors(colorSettings);
     }
 
     public void OnShapeSettingsUpdated()

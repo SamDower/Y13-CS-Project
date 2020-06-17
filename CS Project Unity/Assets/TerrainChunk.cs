@@ -273,6 +273,10 @@ public class TerrainChunk : MonoBehaviour
 {0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
+
+    float minHeight = 9999999999f;
+    float maxHeight = -9999999999f;
+    Mesh mesh;
     
 
     public void GenerateMesh(ShapeGenerator shapeGenerator, float chunkSize, float chunkDensity, float surfaceHeight, bool interpolate)
@@ -339,6 +343,8 @@ public class TerrainChunk : MonoBehaviour
                                 float t = (surfaceHeight - noise1) / (noise2 - noise1);
                                 Vector3 localPoint = (Vector3.Lerp(localPoints[0], localPoints[1], t) + new Vector3(x, y, z)) * chunkSize / chunkDensity - Vector3.one * chunkSize / 2f;
                                 verticesList.Add(localPoint);
+                                if (localPoint.y < minHeight) minHeight = localPoint.y;
+                                if (localPoint.y > maxHeight) maxHeight = localPoint.y;
                             }
 
                             // Add Triangle Point
@@ -350,12 +356,25 @@ public class TerrainChunk : MonoBehaviour
         }
 
         // Create Mesh
-        Mesh mesh = new Mesh();
+        mesh = new Mesh();
         mesh.vertices = verticesList.ToArray();
         mesh.triangles = trianglesList.ToArray();
         mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = mesh;
-        
+    }
+
+    public void GenerateColors(ColorSettings settings)
+    {
+        Vector3[] vertices = mesh.vertices;
+        Color[] colors = new Color[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            //float time = Mathf.InverseLerp(minHeight, maxHeight, vertices[i].y); TODO make it based on min and max world values
+            float time = Mathf.InverseLerp(-chunkSize/2f, chunkSize/2f, vertices[i].y);
+            colors[i] = settings.heightGradient.Evaluate(time);
+        }
+        mesh.colors = colors;
+        GetComponent<MeshFilter>().mesh = mesh;
     }
 
     float NoiseAtIndex(float x, float y, float z)

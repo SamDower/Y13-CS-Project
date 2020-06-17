@@ -12,4 +12,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a4a7b00193dca84faa6e6622f8af862, type: 3}
   m_Name: Color1
   m_EditorClassIdentifier: 
-  color: {r: 0.4056604, g: 0, b: 0, a: 1}
+  heightGradient:
+    serializedVersion: 2
+    key0: {r: 0.031767458, g: 0.01568627, b: 0.34117648, a: 1}
+    key1: {r: 0.70111495, g: 0.5816005, b: 0.022222785, a: 1}
+    key2: {r: 0.3764706, g: 0.0862745, b: 0.0941524, a: 0}
+    key3: {r: 0.122641504, g: 0, b: 0.08247602, a: 0}
+    key4: {r: 0.7924528, g: 0.57503927, b: 0.30277678, a: 0}
+    key5: {r: 1, g: 1, b: 1, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 15998
+    ctime1: 17733
+    ctime2: 30069
+    ctime3: 40863
+    ctime4: 51850
+    ctime5: 63415
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 6
+    m_NumAlphaKeys: 2

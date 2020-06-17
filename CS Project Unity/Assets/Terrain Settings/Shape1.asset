@@ -16,7 +16,7 @@ MonoBehaviour:
   noiseScale: 60
   weightY: 1
   yOffset: -30
-  lockSeaLevel: 1
+  lockSeaLevel: 0
   seaLevel: -5
   noiseWeight: 80
   octaves: 3
